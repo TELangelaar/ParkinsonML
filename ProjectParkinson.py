@@ -16,8 +16,8 @@ import os, gc
 import warnings; warnings.filterwarnings('ignore')
 
 #%% Directories
-directory_tappy = "E:/Documents/Studie/Hoorcollege's/Big Data & Data Science/ProjectParkinson/Tappy Data/"
-directory_user = "E:/Documents/Studie/Hoorcollege's/Big Data & Data Science/ProjectParkinson/Archived users/"
+directory_tappy = "C:/Users/Desktop-TL/Documents/GitRepos/ParkinsonML/Tappy Data/"
+directory_user = "C:/Users/Desktop-TL/Documents/GitRepos/ParkinsonML/Archived users/"
 
 #%% Function Definitions
 def read_tappy(directory, file_name):
