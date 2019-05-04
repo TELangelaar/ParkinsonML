@@ -234,10 +234,30 @@ combined_user_df[combined_user_df['Latency time'] > 800] = 0
 combined_user_df[combined_user_df['Flight time'] > 800] = 0
 
 all_cols = ['BirthYear','Male','Parkinsons','Tremors','DiagnosisYear','Sided_Left','Sided_None','Sided_Right','UPDRS_1','UPDRS_2','UPDRS_3','UPDRS_4',"UPDRS_Don't know",'Impact','Levadopa','DA','MAOB','Other']+column_names
-combined_user_df = combined_user_df.melt(id_vars=all_cols,value_vars=['Hold time','Latency time','Flight time'],var_name='Kind',value_name='Time')
+combined_user_df_copy = combined_user_df.melt(id_vars=all_cols,value_vars=['Hold time','Latency time','Flight time'],var_name='Kind',value_name='Time')
 
-sns.boxplot(x='Kind',y='Time',hue='Parkinsons',data=combined_user_df)
+sns.boxplot(x='Kind',y='Time',hue='Parkinsons',data=combined_user_df_copy)
 plt.title('Mean times for Parkinsons')
 plt.ylabel('Time (ms)')
 plt.savefig('swarmtimes.png',bbox_inces='tight')
+plt.show()
+
+combined_user_df[combined_user_df['Impact'] == 0] = None
+order = ['None','Mild','Medium','Severe']
+sns.scatterplot(x='Hold time',y='Latency time',hue='Impact',hue_order=order,data=combined_user_df)
+plt.ylabel('Latency time (ms)')
+plt.xlabel('Hold time (ms)')
+plt.title('Mean times of every participant')
+plt.show()
+
+sns.scatterplot(x='Hold time',y='Flight time',hue='Impact',hue_order=order,data=combined_user_df)
+plt.ylabel('Flight (ms)')
+plt.xlabel('Hold time (ms)')
+plt.title('Mean times of every participant')
+plt.show()
+
+sns.scatterplot(x='Flight time',y='Latency time',hue='Impact',hue_order=order,data=combined_user_df)
+plt.ylabel('Latency time (ms)')
+plt.xlabel('Flight time (ms)')
+plt.title('Mean times of every participant')
 plt.show()
