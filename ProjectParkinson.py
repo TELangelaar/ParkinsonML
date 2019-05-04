@@ -33,7 +33,6 @@ def read_tappy(directory, file_name):
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce', format='%y%M%d').dt.date
 
     # converting time data to numeric
-    #print(df[df['Hold time'] == '0105.0EA27ICBLF']) # for 0EA27ICBLF_1607.txt
     for column in ['Hold time', 'Latency time', 'Flight time']:
         df[column] = pd.to_numeric(df[column], errors='coerce')
     df = df.dropna(axis=0)
@@ -127,7 +126,9 @@ user_tappy_df = pd.DataFrame(columns=column_names)
 for user_id in user_df.index:
     user_tappy_data = process_user(str(user_id), tappy_data)
     user_tappy_df.loc[user_id] = user_tappy_data
-    
+
+user_tappy_df = user_tappy_df.fillna(0)
+user_tappy_df[user_tappy_df < 0] = 0  
 #%% Data Visualisation: User Data
 N = len(users_actual)
 
@@ -212,3 +213,31 @@ plt.savefig('countimpact.png',bbox_inches='tight')
 plt.show()
 
 #%% Data Visualisation: Tappy Data
+combined_user_df = pd.concat([user_df, user_tappy_df], axis=1)
+
+total_col_names = ['Hold time','Latency time','Flight time']
+total_hand_names = ['LL','LR','LS','RL','RR','RS','SL','SR','SS']
+N = len(total_hand_names)
+for col in total_col_names:
+    for col2 in total_hand_names:
+        combined_user_df[col] = ((combined_user_df['LL_'+col]+
+                                 combined_user_df['LR_'+col]+
+                                 combined_user_df['LS_'+col]+
+                                 combined_user_df['RL_'+col]+
+                                 combined_user_df['RR_'+col]+
+                                 combined_user_df['RS_'+col]+
+                                 combined_user_df['SL_'+col]+
+                                 combined_user_df['SR_'+col]+
+                                 combined_user_df['SS_'+col])/N)
+combined_user_df[combined_user_df['Hold time'] > 800] = 0
+combined_user_df[combined_user_df['Latency time'] > 800] = 0
+combined_user_df[combined_user_df['Flight time'] > 800] = 0
+
+all_cols = ['BirthYear','Male','Parkinsons','Tremors','DiagnosisYear','Sided_Left','Sided_None','Sided_Right','UPDRS_1','UPDRS_2','UPDRS_3','UPDRS_4',"UPDRS_Don't know",'Impact','Levadopa','DA','MAOB','Other']+column_names
+combined_user_df = combined_user_df.melt(id_vars=all_cols,value_vars=['Hold time','Latency time','Flight time'],var_name='Kind',value_name='Time')
+
+sns.boxplot(x='Kind',y='Time',hue='Parkinsons',data=combined_user_df)
+plt.title('Mean times for Parkinsons')
+plt.ylabel('Time (ms)')
+plt.savefig('swarmtimes.png',bbox_inces='tight')
+plt.show()
