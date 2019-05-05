@@ -118,6 +118,33 @@ plt.title('Number of males and females')
 plt.savefig('countgender.png',bbox_inches='tight')
 plt.show()
 
+#Males and Females for Parkinson: Stacked
+ind = np.arange(2)
+width = 0.5
+
+Ptrue_M = user_df[user_df['Parkinsons']==1]
+Ptrue_M = len(Ptrue_M.Male[Ptrue_M['Male']==1])
+Ptrue_F = user_df[user_df['Parkinsons']==1]
+Ptrue_F = len(Ptrue_F.Male[Ptrue_F['Male']==0])
+
+Pfalse_M = user_df[user_df['Parkinsons']==0]
+Pfalse_M = len(Pfalse_M.Male[Pfalse_M['Male']==1])
+Pfalse_F = user_df[user_df['Parkinsons']==0]
+Pfalse_F = len(Pfalse_F.Male[Pfalse_F['Male']==0])
+
+men = (Pfalse_M,Ptrue_M)
+women = (Pfalse_F,Ptrue_F)
+
+with sns.color_palette(palette='bwr',n_colors=2): #Men in blue, women in pink
+    g1 = plt.bar(ind,men,width)
+    g2 = plt.bar(ind,women,width,bottom=men)
+plt.xticks(ind, ('Healthy','Parkinsons'))
+plt.ylim([0, 200])
+plt.text(0, 65,cParkinsonsFalse,horizontalalignment='center',fontsize=20)
+plt.text(1, 170,cParkinsonsTrue,horizontalalignment='center',fontsize=20)
+plt.title('Distribution of gender among Parkinsons and Healthy')
+plt.show()
+
 #Males and Females for Parkinson
 g = sns.countplot(x='Parkinsons',hue='Male',data=user_df,palette='bwr_r')
 cPM_false = user_df[user_df['Parkinsons']==0]
@@ -182,26 +209,40 @@ combined_user_df[combined_user_df['Flight time'] > 800] = 0
 all_cols = ['BirthYear','Male','Parkinsons','Tremors','DiagnosisYear','Sided_Left','Sided_None','Sided_Right','UPDRS_1','UPDRS_2','UPDRS_3','UPDRS_4',"UPDRS_Don't know",'Impact','Levadopa','DA','MAOB','Other']+column_names
 combined_user_df_copy = combined_user_df.melt(id_vars=all_cols,value_vars=['Hold time','Latency time','Flight time'],var_name='Kind',value_name='Time')
 
+combined_user_df[combined_user_df['Impact'] == 0] = None
+combined_user_df_copy[combined_user_df_copy['Impact'] == 0] = None
+order = ['None','Mild','Medium','Severe']
+
+#Boxplot, grouped by Parkinsons
 sns.boxplot(x='Kind',y='Time',hue='Parkinsons',data=combined_user_df_copy)
 plt.title('Mean times for Parkinsons')
 plt.ylabel('Time (ms)')
+plt.legend(loc='upper left')
 plt.savefig('swarmtimes.png',bbox_inces='tight')
 plt.show()
 
-combined_user_df[combined_user_df['Impact'] == 0] = None
-order = ['None','Mild','Medium','Severe']
+#Boxplot, grouped by Impact
+sns.boxplot(x='Kind',y='Time',hue='Impact',hue_order=order,data=combined_user_df_copy)
+plt.title('Mean times for Parkinsons')
+plt.ylabel('Time (ms)')
+plt.savefig('impacttimes.png',bbox_inces='tight')
+plt.show()
+
+#Scatterplot: Hold vs Latency
 sns.scatterplot(x='Hold time',y='Latency time',hue='Impact',hue_order=order,data=combined_user_df)
 plt.ylabel('Latency time (ms)')
 plt.xlabel('Hold time (ms)')
 plt.title('Mean times of every participant')
 plt.show()
 
+#Scatterplot: Hold vs Flight
 sns.scatterplot(x='Hold time',y='Flight time',hue='Impact',hue_order=order,data=combined_user_df)
 plt.ylabel('Flight (ms)')
 plt.xlabel('Hold time (ms)')
 plt.title('Mean times of every participant')
 plt.show()
 
+#Scatterplot: Flight vs Latency
 sns.scatterplot(x='Flight time',y='Latency time',hue='Impact',hue_order=order,data=combined_user_df)
 plt.ylabel('Latency time (ms)')
 plt.xlabel('Flight time (ms)')
