@@ -248,3 +248,4 @@ plt.ylabel('Latency time (ms)')
 plt.xlabel('Flight time (ms)')
 plt.title('Mean times of every participant')
 plt.show()
+
