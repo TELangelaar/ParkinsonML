@@ -11,69 +11,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import os, gc
+from readprocess_tappy import process_user
+
+import os
 
 import warnings; warnings.filterwarnings('ignore')
 
 #%% Directories
 directory_tappy = "C:/Users/Desktop-TL/Documents/GitRepos/ParkinsonML/Tappy Data/"
 directory_user = "C:/Users/Desktop-TL/Documents/GitRepos/ParkinsonML/Archived users/"
-
-#%% Function Definitions
-def read_tappy(directory, file_name):
-    df = pd.read_csv(
-        directory + file_name,
-        delimiter = '\t',
-        index_col = False,
-        names = ['UserKey', 'Date', 'Timestamp', 'Hand', 'Hold time', 'Direction', 'Latency time', 'Flight time']
-    )
-
-    df = df.drop('UserKey', axis=1)
-
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce', format='%y%M%d').dt.date
-
-    # converting time data to numeric
-    for column in ['Hold time', 'Latency time', 'Flight time']:
-        df[column] = pd.to_numeric(df[column], errors='coerce')
-    df = df.dropna(axis=0)
-
-    # cleaning data in Hand
-    df = df[
-        (df['Hand'] == 'L') |
-        (df['Hand'] == 'R') |
-        (df['Hand'] == 'S')
-    ]
-
-    # cleaning data in Direction
-    df = df[
-        (df['Direction'] == 'LL') |
-        (df['Direction'] == 'LR') |
-        (df['Direction'] == 'LS') |
-        (df['Direction'] == 'RL') |
-        (df['Direction'] == 'RR') |
-        (df['Direction'] == 'RS') |
-        (df['Direction'] == 'SL') |
-        (df['Direction'] == 'SR') |
-        (df['Direction'] == 'SS')
-    ]
-
-    direction_group_df = df.groupby('Direction').mean()
-    del df; gc.collect()
-    direction_group_df = direction_group_df.reindex(['LL', 'LR', 'LS', 'RL', 'RR', 'RS', 'SL', 'SR', 'SS'])
-    direction_group_df = direction_group_df.sort_index() # to ensure correct order of data
-    
-    return direction_group_df.values.flatten() # returning a numppy array
-
-
-def process_user(user_id, filenames):
-    running_user_data = np.array([])
-
-    for filename in filenames:
-        if user_id in filename:
-            running_user_data = np.append(running_user_data, read_tappy(directory_tappy,filename))
-    
-    running_user_data = np.reshape(running_user_data, (-1, 27))
-    return np.nanmean(running_user_data, axis=0) # ignoring NaNs while calculating the mean
 
 #%% Data Import
 user_data = os.listdir(directory_user)
@@ -124,7 +70,7 @@ column_names = [first_hand + second_hand + '_' + time for first_hand in ['L', 'R
 user_tappy_df = pd.DataFrame(columns=column_names)
 
 for user_id in user_df.index:
-    user_tappy_data = process_user(str(user_id), tappy_data)
+    user_tappy_data = process_user(directory_tappy, str(user_id), tappy_data)
     user_tappy_df.loc[user_id] = user_tappy_data
 
 user_tappy_df = user_tappy_df.fillna(0)
