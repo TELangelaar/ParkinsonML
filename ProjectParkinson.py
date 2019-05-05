@@ -233,6 +233,7 @@ sns.scatterplot(x='Hold time',y='Latency time',hue='Impact',hue_order=order,data
 plt.ylabel('Latency time (ms)')
 plt.xlabel('Hold time (ms)')
 plt.title('Mean times of every participant')
+plt.savefig('scatterholdlatency.png',bbox_inces='tight')
 plt.show()
 
 #Scatterplot: Hold vs Flight
@@ -240,6 +241,7 @@ sns.scatterplot(x='Hold time',y='Flight time',hue='Impact',hue_order=order,data=
 plt.ylabel('Flight (ms)')
 plt.xlabel('Hold time (ms)')
 plt.title('Mean times of every participant')
+plt.savefig('scatterholdflight.png',bbox_inces='tight')
 plt.show()
 
 #Scatterplot: Flight vs Latency
@@ -247,5 +249,5 @@ sns.scatterplot(x='Flight time',y='Latency time',hue='Impact',hue_order=order,da
 plt.ylabel('Latency time (ms)')
 plt.xlabel('Flight time (ms)')
 plt.title('Mean times of every participant')
+plt.savefig('scatterlatencyflight.png',bbox_inces='tight')
 plt.show()
-
