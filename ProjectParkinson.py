@@ -18,8 +18,8 @@ import os
 import warnings; warnings.filterwarnings('ignore')
 
 #%% Directories
-directory_tappy = "C:/Users/Desktop-TL/Documents/GitRepos/ParkinsonML/Tappy Data/"
-directory_user = "C:/Users/Desktop-TL/Documents/GitRepos/ParkinsonML/Archived users/"
+directory_tappy = "D:/HMS/Master1/BigData/GitRepos/ParkinsonML/Tappy Data/"
+directory_user = "D:/HMS/Master1/BigData/GitRepos/ParkinsonML/Archived users/"
 
 #%% Data Import
 user_data = os.listdir(directory_user)
@@ -35,7 +35,7 @@ columns = ['BirthYear', 'Gender', 'Parkinsons', 'Tremors', 'DiagnosisYear',
     'Sided', 'UPDRS', 'Impact', 'Levadopa', 'DA', 'MAOB', 'Other']
 user_df = pd.DataFrame(columns=columns)
 for userid in users_actual:
-    f = open("E:/Documents/Studie/Hoorcollege's/Big Data & Data Science/ProjectParkinson/Archived users/"+'User_'+userid+'.txt')
+    f = open(directory_user+'User_'+userid+'.txt')
     user_df.loc[userid] = [line.split(': ')[1][: -1] for line in f.readlines()]
     f.close()
 
