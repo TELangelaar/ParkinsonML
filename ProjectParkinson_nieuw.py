@@ -22,7 +22,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler, LabelEncoder
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, confusion_matrix
-
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.decomposition import PCA
 
 # %% Methods
 def model_pipeline(model, X, y):
@@ -116,10 +117,43 @@ for user_id in user_df.index:
     user_tappy_data = process_user(directory_tappy, str(user_id), tappy_data)
     user_tappy_df.loc[user_id] = user_tappy_data
 
-# %%
-user_tappy_df.dropna(inplace=True)
+# %% NaN values, outliers and merging DataFrames
+
+# Mean imputation & removing outliers
+for column in user_tappy_df:
+    user_tappy_df[column].fillna(user_tappy_df[column].mean(), inplace=True)
+
 full_set = pd.merge(user_tappy_df.reset_index(), user_df.reset_index(), on='index')
-full_set.set_index('index', inplace=True)
+full_set.set_index('index')
+
+
+# %% LDA
+features_hold = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
+                 'R_Hand_mean', 'R_Hand_std', 'R_Hand_kurt', 'R_Hand_skew',
+                 'diff_Hand_mean']
+
+features_lat = ['LR_mean', 'LR_std', 'LR_kurt', 'LR_skew',
+                    'RL_mean', 'RL_std', 'RL_kurt', 'RL_skew',
+                    'LL_mean', 'LL_std', 'LL_kurt', 'LL_skew',
+                    'RR_mean', 'RR_std', 'RR_kurt', 'RR_skew',
+                    'diff_opposite_mean', 'diff_same_mean']
+
+X_hold = full_set[features_hold].values
+X_hold = StandardScaler().fit_transform(X_hold)
+X_lat = full_set[features_lat].values
+y = full_set['Parkinsons'].values
+
+pca_hold = PCA().fit(X_hold)
+plt.figure(figsize=(10, 10))
+plt.plot(pca_hold.explained_variance_ratio_, 'o-')
+plt.xlabel('number of components')
+plt.ylabel('explained variance ratio')
+plt.show()
+
+pca_hold = PCA(n_components=3)
+X_PCA_hold = pca_hold.fit_transform(X_hold)
+print(pca_hold.explained_variance_ratio_)
+
 
 # %% Machine Learning
 # All features and groups
@@ -133,19 +167,19 @@ features = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
                'diff_opposite_mean', 'diff_same_mean']
 target = 'Parkinsons'
 
-#Mild = full_set[full_set['Impact_Mild'] == 1]
-#Ldopa_Mild = Mild[full_set['Levadopa'] == 0]
-#X = Ldopa_Mild[features]
-#X = RobustScaler().fit_transform(X)
-#y = Ldopa_Mild[target]
-
-X = full_set[features]
+Mild = full_set[full_set['Impact_Mild'] == 1]
+Ldopa_Mild = Mild[full_set['Levadopa'] == 0]
+X = Ldopa_Mild[features]
 X = RobustScaler().fit_transform(X)
-y = full_set[target]
+y = Ldopa_Mild[target]
 
-knn = KNeighborsClassifier(n_neighbors=3)
+#X = full_set[features]
+#X = RobustScaler().fit_transform(X)
+#y = full_set[target]
+
+knn = KNeighborsClassifier(n_neighbors=13)
 logreg = LogisticRegression()
-tree = DecisionTreeClassifier(max_depth=2)
+tree = DecisionTreeClassifier(max_depth=6)
 
 y_pred_knn = model_pipeline(knn, X, y)
 y_pred_logreg = model_pipeline(logreg, X, y)

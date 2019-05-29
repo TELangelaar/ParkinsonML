@@ -95,7 +95,7 @@ def process_user(directory_tappy, user_id, filenames):
             running_user_data = np.append(running_user_data, read_tappy(directory_tappy,filename))
     
     running_user_data = np.reshape(running_user_data, (-1, 27))
-    return np.mean(running_user_data, axis=0) # ignoring NaNs while calculating the mean
+    return np.mean(running_user_data, axis=0)
 
 #%%
 #tappy_names = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
