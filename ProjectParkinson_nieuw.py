@@ -11,8 +11,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from pandas.api.types import CategoricalDtype
-
 from readprocess_tappy import process_user
 
 import warnings; warnings.filterwarnings('ignore')
@@ -124,6 +122,7 @@ full_set = pd.merge(user_tappy_df.reset_index(), user_df.reset_index(), on='inde
 full_set.set_index('index', inplace=True)
 
 # %% Machine Learning
+# All features and groups
 features = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
                'R_Hand_mean', 'R_Hand_std', 'R_Hand_kurt', 'R_Hand_skew', 
                'diff_Hand_mean',
@@ -131,17 +130,20 @@ features = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
                'RL_mean', 'RL_std', 'RL_kurt', 'RL_skew',
                'LL_mean', 'LL_std', 'LL_kurt', 'LL_skew',
                'RR_mean', 'RR_std', 'RR_kurt', 'RR_skew',
-               'diff_opposite_mean', 'diff_same_mean',
-               'Impact_Medium','Impact_Mild','Impact_No','Impact_Severe',
-               'Levadopa',
-               'Sided_Left', 'Sided_Right', 'Sided_None']
+               'diff_opposite_mean', 'diff_same_mean']
 target = 'Parkinsons'
+
+#Mild = full_set[full_set['Impact_Mild'] == 1]
+#Ldopa_Mild = Mild[full_set['Levadopa'] == 0]
+#X = Ldopa_Mild[features]
+#X = RobustScaler().fit_transform(X)
+#y = Ldopa_Mild[target]
 
 X = full_set[features]
 X = RobustScaler().fit_transform(X)
 y = full_set[target]
 
-knn = KNeighborsClassifier(n_neighbors=2)
+knn = KNeighborsClassifier(n_neighbors=3)
 logreg = LogisticRegression()
 tree = DecisionTreeClassifier(max_depth=2)
 
