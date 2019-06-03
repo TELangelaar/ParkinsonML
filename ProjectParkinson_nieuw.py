@@ -21,7 +21,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler, LabelEncoder
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, confusion_matrix
+from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, confusion_matrix, mean_squared_error
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
 
@@ -31,7 +31,7 @@ def model_pipeline(model, X, y):
                                                         random_state=42)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    return y_pred
+    return y_pred, y_test
 
 
 def model_evaluation(model, X, y, y_pred):
@@ -40,10 +40,10 @@ def model_evaluation(model, X, y, y_pred):
     cvs = cross_val_score(model, X, y, scoring='accuracy', cv=5)
     acc = accuracy_score(y_test, y_pred)
     probs = model.predict_proba(X_test)
-    fpr, tpr, threshold_knn = roc_curve(y_test, probs[:, 1])
+    fpr, tpr, threshold = roc_curve(y_test, probs[:, 1])
     auc = roc_auc_score(y_test, probs[:, 1])
     conf = confusion_matrix(y_test, y_pred)
-    return cvs, acc, auc, fpr, tpr, conf
+    return cvs, acc, auc, fpr, tpr, conf, threshold, probs
 
 # %% Directories
 directory_tappy = "Tappy Data/"
@@ -181,14 +181,15 @@ knn = KNeighborsClassifier(n_neighbors=13)
 logreg = LogisticRegression()
 tree = DecisionTreeClassifier(max_depth=6)
 
-y_pred_knn = model_pipeline(knn, X, y)
-y_pred_logreg = model_pipeline(logreg, X, y)
-y_pred_tree = model_pipeline(tree, X, y)
+y_pred_knn, y_test = model_pipeline(knn, X, y)
+y_pred_logreg, y_test = model_pipeline(logreg, X, y)
+y_pred_tree, y_test = model_pipeline(tree, X, y)
+
 
 # %% Evaluation
-cvs_knn, acc_knn, auc_knn, fpr_knn, tpr_knn, conf_knn = model_evaluation(knn, X, y, y_pred_knn)
-cvs_logreg, acc_logreg, auc_logreg, fpr_logreg, tpr_logreg, conf_logreg = model_evaluation(logreg, X, y, y_pred_logreg)
-cvs_tree, acc_tree, auc_tree, fpr_tree, tpr_tree, conf_tree = model_evaluation(tree, X, y, y_pred_tree)
+cvs_knn, acc_knn, auc_knn, fpr_knn, tpr_knn, conf_knn, threshold_knn, probs_knn = model_evaluation(knn, X, y, y_pred_knn)
+cvs_logreg, acc_logreg, auc_logreg, fpr_logreg, tpr_logreg, conf_logreg, threshold_logreg, probs_logreg = model_evaluation(logreg, X, y, y_pred_logreg)
+cvs_tree, acc_tree, auc_tree, fpr_tree, tpr_tree, conf_tree, threshold_tree, probs_tree = model_evaluation(tree, X, y, y_pred_tree)
 
 # %% Plotting
 # Accuracy scores, tpr, fpr from Schrag et al (2002)
