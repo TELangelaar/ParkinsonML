@@ -156,8 +156,8 @@ X_hold = pca_set[features_hold].values
 X_lat = pca_set[features_lat].values
 
 # Standardizing Data
-X_hold = StandardScaler().fit_transform(X_hold)
-X_lat = StandardScaler().fit_transform(X_lat)
+X_hold = RobustScaler().fit_transform(X_hold)
+X_lat = RobustScaler().fit_transform(X_lat)
 
 # Target variable
 y = pca_set['Parkinsons'].values
@@ -208,23 +208,11 @@ MLset = pc_hold_df.join(pc_lat_df)
 MLset['target'] = y
 
 # %% Machine Learning
-features = columns_hold + columns_lat
+features = columns_lat + columns_hold
 target = 'target'
 
 X = MLset[features]
 y = MLset[target]
-
-#for neighbor in range(1,13):
-#    knn = KNeighborsClassifier(neighbor)
-#    cvs = cross_val_score(knn, X, y, scoring='accuracy', cv=X.shape[0])
-#    print(cvs, np.mean(cvs))
-
-print('----------------')
-    
-#for C_value in [0.001, 0.01, 0.1, 1, 10, 100, 1000]:
-#    logreg = LogisticRegression(C=C_value)
-#    cvs = cross_val_score(logreg, X, y, scoring='accuracy', cv=X.shape[0])
-#    print(cvs, np.mean(cvs))
 
 knn = KNeighborsClassifier(n_neighbors=4)
 logreg = LogisticRegression(C=0.01)
