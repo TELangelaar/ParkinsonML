@@ -228,7 +228,7 @@ logreg_mcvs_best = 0
 tree_mcvs_best = 0
 
 for neighbor in param_neighbors:
-    knn = KNeighborsClassifier(neighbor)
+    knn = KNeighborsClassifier(n_neighbors=neighbor)
     mcvs_knn = np.mean(cross_val_score(knn, X, y, cv=10, scoring='accuracy'))
     if mcvs_knn > knn_mcvs_best:
         knn_best_param = neighbor
@@ -249,9 +249,9 @@ for depth in param_depth:
         tree_best_param = depth
         tree_mcvs_best = mcvs_tree
 
-knn = KNeighborsClassifier(knn_best_param)
-logreg = LogisticRegression(logreg_best_param)
-tree = DecisionTreeClassifier(tree_best_param)
+knn = KNeighborsClassifier(n_neighbors=knn_best_param)
+logreg = LogisticRegression(C=logreg_best_param)
+tree = DecisionTreeClassifier(max_depth=tree_best_param)
 
 y_pred_knn, y_test = model_pipeline(knn, X, y)
 y_pred_logreg, y_test = model_pipeline(logreg, X, y)
@@ -262,6 +262,11 @@ y_pred_tree, y_test = model_pipeline(tree, X, y)
 cvs_knn, acc_knn, auc_knn, fpr_knn, tpr_knn, conf_knn, threshold_knn, probs_knn = model_evaluation(knn, X, y, y_pred_knn)
 cvs_logreg, acc_logreg, auc_logreg, fpr_logreg, tpr_logreg, conf_logreg, threshold_logreg, probs_logreg = model_evaluation(logreg, X, y, y_pred_logreg)
 cvs_tree, acc_tree, auc_tree, fpr_tree, tpr_tree, conf_tree, threshold_tree, probs_tree = model_evaluation(tree, X, y, y_pred_tree)
+
+# %% Average Model
+y_stack = np.column_stack([y_pred_knn, y_pred_logreg, y_pred_tree])
+y_pred_average = np.mean(y_stack, axis=1)
+acc_average = accuracy_score(y_test, y_pred_average)
 
 # %% Plotting
 # Accuracy scores, tpr, fpr from Schrag et al (2002)

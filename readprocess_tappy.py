@@ -109,9 +109,8 @@ def read_tappy(directory, file_name):
     temp_array = np.append(temp_array,
                            (df[df['Direction'] == 'LL']['Latency time'].mean()
                             - df[df['Direction'] == 'RR']['Latency time'].mean()))
-    if len(df) > 100:
-        return temp_array # returning a numpy array
-    return np.arange(27).fill(0)
+
+    return temp_array # returning a numpy array
 
 def process_user(directory_tappy, user_id, filenames):
     running_user_data = np.array([])
