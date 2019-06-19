@@ -7,6 +7,7 @@ Functions definitions to read and process user and tappy data from Parkinsons
 """
 import pandas as pd
 import numpy as np
+import os
 
 def read_tappy(directory, file_name):
     df = pd.read_csv(
@@ -108,8 +109,9 @@ def read_tappy(directory, file_name):
     temp_array = np.append(temp_array,
                            (df[df['Direction'] == 'LL']['Latency time'].mean()
                             - df[df['Direction'] == 'RR']['Latency time'].mean()))
-
-    return temp_array # returning a numpy array
+    if len(df) > 100:
+        return temp_array # returning a numpy array
+    return np.arange(27).fill(0)
 
 def process_user(directory_tappy, user_id, filenames):
     running_user_data = np.array([])
@@ -118,7 +120,21 @@ def process_user(directory_tappy, user_id, filenames):
         if user_id in filename:
             running_user_data = np.append(running_user_data,
                                           read_tappy(directory_tappy,filename))
-    
+            
     running_user_data = np.reshape(running_user_data, (-1, 27))
     return np.mean(running_user_data, axis=0)
 
+# %%
+tappy_names = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
+               'R_Hand_mean', 'R_Hand_std', 'R_Hand_kurt', 'R_Hand_skew', 
+               'diff_Hand_mean',
+               'LR_mean', 'LR_std', 'LR_kurt', 'LR_skew',
+               'RL_mean', 'RL_std', 'RL_kurt', 'RL_skew',
+               'LL_mean', 'LL_std', 'LL_kurt', 'LL_skew',
+               'RR_mean', 'RR_std', 'RR_kurt', 'RR_skew',
+               'diff_opposite_mean', 'diff_same_mean']
+
+user_tappy_df = pd.DataFrame(columns=tappy_names)
+
+user_tappy_data = process_user("Tappy Data/", str("XWAX2IHF3O"), os.listdir("Tappy Data/"))
+user_tappy_df.loc["XWAX2IHF3O"] = user_tappy_data

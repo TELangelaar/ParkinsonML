@@ -214,9 +214,44 @@ target = 'target'
 X = MLset[features]
 y = MLset[target]
 
-knn = KNeighborsClassifier(n_neighbors=4)
-logreg = LogisticRegression(C=0.01)
-tree = DecisionTreeClassifier(max_depth=4)
+# Hyperparametrization
+param_neighbors = [x for x in range(1, 15)]
+param_C = [(x/1000) for x in range(1, 50)]
+param_depth = [x for x in range(1, 10)]
+
+knn_best_param = 0
+logreg_best_param = 0
+tree_best_param = 0
+
+knn_mcvs_best = 0
+logreg_mcvs_best = 0
+tree_mcvs_best = 0
+
+for neighbor in param_neighbors:
+    knn = KNeighborsClassifier(neighbor)
+    mcvs_knn = np.mean(cross_val_score(knn, X, y, cv=10, scoring='accuracy'))
+    if mcvs_knn > knn_mcvs_best:
+        knn_best_param = neighbor
+        knn_mcvs_best = mcvs_knn
+
+for C_value in param_C:
+    logreg = LogisticRegression(C=C_value)
+    mcvs_logreg = np.mean(
+                    cross_val_score(logreg, X, y, cv=10, scoring='accuracy'))
+    if mcvs_logreg > logreg_mcvs_best:
+        logreg_best_param = C_value
+        logreg_mcvs_best = mcvs_logreg
+
+for depth in param_depth:
+    tree = DecisionTreeClassifier(max_depth=depth)
+    mcvs_tree = np.mean(cross_val_score(tree, X, y, cv=10, scoring='accuracy'))
+    if mcvs_tree > tree_mcvs_best:
+        tree_best_param = depth
+        tree_mcvs_best = mcvs_tree
+
+knn = KNeighborsClassifier(knn_best_param)
+logreg = LogisticRegression(logreg_best_param)
+tree = DecisionTreeClassifier(tree_best_param)
 
 y_pred_knn, y_test = model_pipeline(knn, X, y)
 y_pred_logreg, y_test = model_pipeline(logreg, X, y)
