@@ -21,11 +21,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler, LabelEncoder
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, confusion_matrix, mean_squared_error
+from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, confusion_matrix
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
-
-from sklearn.manifold import TSNE
 
 # %% Methods
 def model_pipeline(model, X, y):
@@ -42,10 +40,10 @@ def model_evaluation(model, X, y, y_pred):
     cvs = cross_val_score(model, X, y, scoring='accuracy', cv=5)
     acc = accuracy_score(y_test, y_pred)
     probs = model.predict_proba(X_test)
-    fpr, tpr, threshold = roc_curve(y_test, probs[:, 1])
+    fpr, tpr, threshold_knn = roc_curve(y_test, probs[:, 1])
     auc = roc_auc_score(y_test, probs[:, 1])
     conf = confusion_matrix(y_test, y_pred)
-    return cvs, acc, auc, fpr, tpr, conf, threshold, probs
+    return cvs, acc, auc, fpr, tpr, conf, probs
 
 # %% Directories
 directory_tappy = "Tappy Data/"
@@ -121,124 +119,97 @@ for user_id in user_df.index:
 
 # %% NaN values, outliers and merging DataFrames
 
-# Mean imputation & removing outliers
+# Mean imputation
 for column in user_tappy_df:
     user_tappy_df[column].fillna(user_tappy_df[column].mean(), inplace=True)
 
 full_set = pd.merge(user_tappy_df.reset_index(), user_df.reset_index(), on='index')
 full_set.set_index('index', inplace=True)
 
-full_set.to_csv('FullDataset.csv')
-# %% Data preparation & EDA
-features_hold = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
-                 'R_Hand_mean', 'R_Hand_std', 'R_Hand_kurt', 'R_Hand_skew',
-                 'diff_Hand_mean']
 
-features_lat = ['LR_mean', 'LR_std', 'LR_kurt', 'LR_skew',
-                    'RL_mean', 'RL_std', 'RL_kurt', 'RL_skew',
-                    'LL_mean', 'LL_std', 'LL_kurt', 'LL_skew',
-                    'RR_mean', 'RR_std', 'RR_kurt', 'RR_skew',
-                    'diff_opposite_mean', 'diff_same_mean']
-target = 'Parkinsons'
-
-# Select target group: Mild Parkinsons with no LDopa usage.
-Y_park = full_set[full_set['Parkinsons'] == 1]
-N_park = full_set[full_set['Parkinsons'] == 0]
-
-Y_park_mild = Y_park[full_set['Impact_Mild'] == 1]
-N_park_no = N_park[full_set['Impact_No'] == 1]
-
-Y_park_mild_ldopa = Y_park_mild[full_set['Levadopa'] == 0]
-
-pca_set = pd.concat([N_park_no, Y_park_mild_ldopa])
-
-X_hold = pca_set[features_hold].values
-X_lat = pca_set[features_lat].values
-
-# Standardizing Data
-X_hold = StandardScaler().fit_transform(X_hold)
-X_lat = StandardScaler().fit_transform(X_lat)
-
-# Target variable
-y = pca_set['Parkinsons'].values
-
-sns.pairplot(pca_set[features_hold])
-plt.show()
-
-sns.pairplot(pca_set[features_lat])
-plt.show()
-
-# %% PCA
-pcahold_fit = PCA(n_components=0.9).fit(X_hold)
-pcalat_fit = PCA(n_components=0.9).fit(X_lat)
-
-pca_hold = pcahold_fit.transform(X_hold)
-pca_lat = pcalat_fit.transform(X_lat)
-
-columns_hold = ['PC'+str(x)+'_h' for x in range(len(pca_hold[0]))]
-columns_lat = ['PC'+str(x)+'_l' for x in range(len(pca_lat[0]))]
-
-pc_hold_df = pd.DataFrame(pca_hold, columns=columns_hold)
-pc_lat_df = pd.DataFrame(pca_lat, columns=columns_lat)
-
-plt.figure(figsize=(5, 5))
-plt.plot(pcahold_fit.explained_variance_, 'o-')
-plt.xlabel('number of components')
-plt.ylabel('explained variance ratio')
-plt.title('PCA on Hold features')
-plt.show()
-print(pcahold_fit.explained_variance_ratio_.cumsum())
-
-plt.figure(figsize=(5, 5))
-plt.plot(pcalat_fit.explained_variance_, 'o-')
-plt.xlabel('number of components')
-plt.ylabel('explained variance ratio')
-plt.title('PCA on Lat features')
-plt.show()
-print(pcalat_fit.explained_variance_ratio_.cumsum())
-
-sns.pairplot(pc_hold_df)
-plt.show()
-
-sns.pairplot(pc_lat_df)
-plt.show()
-
-# Combining dataframes
-MLset = pc_hold_df.join(pc_lat_df)
-MLset['target'] = y
+# %% PCA/LDA
+#features_hold = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
+#                 'R_Hand_mean', 'R_Hand_std', 'R_Hand_kurt', 'R_Hand_skew',
+#                 'diff_Hand_mean']
+#
+#features_lat = ['LR_mean', 'LR_std', 'LR_kurt', 'LR_skew',
+#                    'RL_mean', 'RL_std', 'RL_kurt', 'RL_skew',
+#                    'LL_mean', 'LL_std', 'LL_kurt', 'LL_skew',
+#                    'RR_mean', 'RR_std', 'RR_kurt', 'RR_skew',
+#                    'diff_opposite_mean', 'diff_same_mean']
+#
+#X_hold = full_set[features_hold].values
+#X_hold = StandardScaler().fit_transform(X_hold)
+#X_lat = full_set[features_lat].values
+#y = full_set['Parkinsons'].values
+#
+#pca_hold = PCA().fit(X_hold)
+#plt.figure(figsize=(10, 10))
+#plt.plot(pca_hold.explained_variance_ratio_, 'o-')
+#plt.xlabel('number of components')
+#plt.ylabel('explained variance ratio')
+#plt.show()
+#
+#pca_hold = PCA(n_components=2)
+#X_PCA_hold = pca_hold.fit_transform(X_hold)
+#print(pca_hold.explained_variance_ratio_)
+#
+#pca_lat = PCA().fit(X_lat)
+#plt.figure(figsize=(10, 10))
+#plt.plot(pca_lat.explained_variance_ratio_, 'o-')
+#plt.xlabel('number of components')
+#plt.ylabel('explained variance ratio')
+#plt.show()
+#
+#pca_lat = PCA(n_components=2)
+#X_PCA_lat = pca_lat.fit_transform(X_lat)
+#print(pca_hold.explained_variance_ratio_)
+#
+#sns.scatterplot(x=X_PCA_hold[:,0], y=X_PCA_hold[:,1], hue=y)
+#plt.show()
+#
+#sns.scatterplot(x=X_PCA_lat[:,0], y=X_PCA_lat[:,1], hue=y)
+#plt.show()
 
 # %% Machine Learning
-features = columns_hold + columns_lat
-target = 'target'
+# All features and groups
+features = ['L_Hand_mean', 'L_Hand_std', 'L_Hand_kurt', 'L_Hand_skew',
+               'R_Hand_mean', 'R_Hand_std', 'R_Hand_kurt', 'R_Hand_skew', 
+               'diff_Hand_mean',
+               'LR_mean', 'LR_std', 'LR_kurt', 'LR_skew',
+               'RL_mean', 'RL_std', 'RL_kurt', 'RL_skew',
+               'LL_mean', 'LL_std', 'LL_kurt', 'LL_skew',
+               'RR_mean', 'RR_std', 'RR_kurt', 'RR_skew',
+               'diff_opposite_mean', 'diff_same_mean']
+target = 'Parkinsons'
 
-X = MLset[features]
-y = MLset[target]
+#Mild = full_set[full_set['Impact_Mild'] == 1]
+#Ldopa_Mild = Mild[full_set['Levadopa'] == 0]
+#X = Ldopa_Mild[features]
+#X = RobustScaler().fit_transform(X)
+#y = Ldopa_Mild[target]
 
-#for neighbor in range(1,13):
-#    knn = KNeighborsClassifier(neighbor)
-#    cvs = cross_val_score(knn, X, y, scoring='accuracy', cv=X.shape[0])
-#    print(cvs, np.mean(cvs))
+Ldopa = full_set[full_set['Levadopa'] == 0]
+X = Ldopa[features]
+X = RobustScaler().fit_transform(X)
+y = Ldopa[target]
 
-print('----------------')
-    
-#for C_value in [0.001, 0.01, 0.1, 1, 10, 100, 1000]:
-#    logreg = LogisticRegression(C=C_value)
-#    cvs = cross_val_score(logreg, X, y, scoring='accuracy', cv=X.shape[0])
-#    print(cvs, np.mean(cvs))
+#X = full_set[features]
+#X = RobustScaler().fit_transform(X)
+#y = full_set[target]
 
-knn = KNeighborsClassifier(n_neighbors=4)
-logreg = LogisticRegression(C=0.01)
-tree = DecisionTreeClassifier(max_depth=4)
+knn = KNeighborsClassifier(n_neighbors=3)
+logreg = LogisticRegression()
+tree = DecisionTreeClassifier(max_depth=2)
 
 y_pred_knn, y_test = model_pipeline(knn, X, y)
 y_pred_logreg, y_test = model_pipeline(logreg, X, y)
 y_pred_tree, y_test = model_pipeline(tree, X, y)
 
-
 # %% Evaluation
-cvs_knn, acc_knn, auc_knn, fpr_knn, tpr_knn, conf_knn, threshold_knn, probs_knn = model_evaluation(knn, X, y, y_pred_knn)
-cvs_logreg, acc_logreg, auc_logreg, fpr_logreg, tpr_logreg, conf_logreg, threshold_logreg, probs_logreg = model_evaluation(logreg, X, y, y_pred_logreg)
-cvs_tree, acc_tree, auc_tree, fpr_tree, tpr_tree, conf_tree, threshold_tree, probs_tree = model_evaluation(tree, X, y, y_pred_tree)
+cvs_knn, acc_knn, auc_knn, fpr_knn, tpr_knn, conf_knn, probs_knn = model_evaluation(knn, X, y, y_pred_knn)
+cvs_logreg, acc_logreg, auc_logreg, fpr_logreg, tpr_logreg, conf_logreg, probs_logreg = model_evaluation(logreg, X, y, y_pred_logreg)
+cvs_tree, acc_tree, auc_tree, fpr_tree, tpr_tree, conf_tree, probs_tree = model_evaluation(tree, X, y, y_pred_tree)
 
 # %% Plotting
 # Accuracy scores, tpr, fpr from Schrag et al (2002)
